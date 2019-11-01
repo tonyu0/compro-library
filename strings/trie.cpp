@@ -27,6 +27,7 @@ class Trie {
 
     bool search(string s) {
       Node* now = root;
+      // マッチ数を数えたいときは遷移しながらnow->endの数を数える。
       for(int i = 0; i < (int)s.size(); ++i) {
         int next = s[i] - 'a';
         if(now->child[next] == nullptr) return false;
@@ -49,14 +50,14 @@ class Trie {
     }
 };
 
-int n;
-string S, s[50505];
- 
 // JOI2010 DNA Synthesizer
-int main() {
-  cin.tie(0); ios_base::sync_with_stdio(false);
+void JOI2010DNA() {
+  int n;
+  string S, s[50505];
   cin >> n >> S;
   Trie trie;
+  // TODO: こういう文字種も処理できるように抽象化する。
+  map<char, int> m;
   m['A'] = 0, m['T'] = 1, m['C'] = 2, m['G'] = 3;
   for(int i = 0; i < n; ++i) {
     cin >> s[i];
@@ -79,5 +80,29 @@ int main() {
     }
   } 
   cout << dp[N-1] << endl;
+}
+
+// https://yukicoder.me/problems/no/430
+void YUKI430() {
+  string S, T;
+  int N;
+  cin >> S >> N;
+  Trie trie;
+  for(int i = 0; i < N; ++i) {
+    cin >> T;
+    trie.insert(T);
+  }
+
+  int ans = 0;
+  for(int i = 0; i < (int)S.size(); ++i) {
+    ans += trie.search(S.substr(i, (int)S.size() - i));
+  }
+  cout << ans << endl;
+}
+
+int main() {
+  cin.tie(0); ios_base::sync_with_stdio(false);
+  // JOI2010DNA();
+  // YUKI430();
   return 0;
 }
