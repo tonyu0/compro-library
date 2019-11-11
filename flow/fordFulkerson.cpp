@@ -5,50 +5,41 @@
 #include <limits>
 using namespace std;
 
-struct Edge
-{
-    int dst, cap, rev;
-    Edge(int d, int c, int r) : dst(d), cap(c), rev(r) {}
-};
-
-using Edges = vector<Edge>;
-using Graph = vector<Edges>;
-
 // 有向グラフかどうかの情報も渡す
 template <typename T, bool directed>
 class FordFulkerson
 {
 public:
-    int n;       // 頂点数
-    Graph graph; // グラフ本体
-    vector<bool> used;
+    int n;                   // 頂点数
+    vector<vector<T>> graph; // グラフ本体(隣接行列)
+    vector<int> used;        // checkと等しかったら使用済み
+    int check = 1;           // while文の中でusedの初期化をしないための変数
 
-    FordFulkerson(int n) : n(n), graph(n) {}
-    // 容量0の逆辺も張る
+    FordFulkerson(int n) : n(n), graph(n, vector<T>(n)), used(n) {}
+
     void add_edge(int src, int dst, T cap)
     {
-        graph[src].emplace_back(dst, cap, graph[dst].size());
-        graph[dst].emplace_back(src, directed ? 0 : cap, graph[src].size() - 1);
+        graph[src][dst] = cap;
+        graph[dst][src] = directed ? 0 : cap;
     }
 
     T dfs(int v, int t, T flow)
     {
         if (v == t)
             return flow;
-        used[v] = true;
-        for (auto &edge : graph[v])
+        used[v] = check;
+        for (int nv = 0; nv < n; ++nv)
         {
-            if (!used[edge.dst] && edge.cap > 0)
+            if (graph[v][nv] == 0 || used[nv] == check)
+                continue;
+            T d = dfs(nv, t, min(flow, graph[v][nv]));
+            if (d)
             {
-                T d = dfs(edge.dst, t, min(flow, edge.cap));
-                if (d > 0)
-                {
-                    // 流せるなら流す
-                    // 流した場合、辺の容量は減り、逆辺の容量は増える
-                    edge.cap -= d;
-                    graph[edge.dst][edge.rev].cap += d;
-                    return d;
-                }
+                // 流せるなら流す
+                // 流した場合、辺の容量は減り、逆辺の容量は増える
+                graph[v][nv] -= d;
+                graph[nv][v] += d;
+                return d;
             }
         }
         return 0;
@@ -59,11 +50,11 @@ public:
         T flow = 0;
         while (true)
         {
-            used.assign(n, false);
             T f = dfs(s, t, numeric_limits<T>::max());
             if (f == 0)
                 break;
             flow += f;
+            ++check;
         }
         return flow;
     }
