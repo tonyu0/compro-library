@@ -33,7 +33,7 @@ public:
             if (graph[v][nv] == 0 || used[nv] == check)
                 continue;
             T d = dfs(nv, t, min(flow, graph[v][nv]));
-            if (d)
+            if (d > 0)
             {
                 // 流せるなら流す
                 // 流した場合、辺の容量は減り、逆辺の容量は増える
