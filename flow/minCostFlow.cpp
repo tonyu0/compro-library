@@ -15,21 +15,21 @@ using namespace std;
 // 流したらその経路上の容量を減らしてく。そのときに経路復元する必要がある。
 // 最短経路パートはベルマンフォードでもできるが、ダイクストラを使うためには負の辺を除去する工夫をする。
 
-// TODO: https://atcoder.jp/contests/pakencamp-2018-day3/tasks/pakencamp_2018_day3_g
+// TODO:
+// https://atcoder.jp/contests/pakencamp-2018-day3/tasks/pakencamp_2018_day3_g
 // https://atcoder.jp/contests/abc137/tasks/abc137_d
 
 template <typename T>
 class MinCostFlow
 {
 public:
-  MinCostFlow(int n) : n(n), capacity(n, vector<T>(n)), cost(n, vector<T>(n)), prev(n) {}
+  MinCostFlow(int n) : n(n), graph(n), prevv(n), preve(n) {}
 
-  void add_edge(int src, int dst, T cap, T c)
+  void add_edge(int src, int dst, T cap, T cost)
   {
-    capacity[src][dst] = cap;
-    capacity[dst][src] = 0;
-    cost[src][dst] = c;
-    cost[dst][src] = -c;
+    // 逆辺はインデックスで管理
+    graph[src].emplace_back(dst, cap, cost, graph[dst].size());
+    graph[dst].emplace_back(src, 0, -cost, graph[src].size() - 1);
   }
 
   T min_cost_flow(int s, int t, T f)
@@ -46,26 +46,34 @@ public:
         h[i] += min_cost[i];
 
       T d = f;
-      for (int v = t; v != s; v = prev[v])
-        d = min(d, capacity[prev[v]][v]);
+      for (int v = t; v != s; v = prevv[v])
+        d = min(d, graph[prevv[v]][preve[v]].cap);
       // 今のステップではd流せるので、流す。
       f -= d;
       res += d * h[t];
       // 残余グラフを編集
-      for (int v = t; v != s; v = prev[v])
+      for (int v = t; v != s; v = prevv[v])
       {
-        capacity[prev[v]][v] -= d;
-        capacity[v][prev[v]] += d;
+        // prevv[v] -> vにpreve[v]を使って流したので・・
+        Edge &e = graph[prevv[v]][preve[v]];
+        e.cap -= d;
+        graph[v][e.rev].cap += d;
       }
     }
     return res;
   }
 
 private:
+  struct Edge
+  {
+    int dst, rev;
+    T cap, cost;
+    Edge(int dst, T cap, T cost, int rev) : dst(dst), cap(cap), cost(cost), rev(rev){};
+  };
   int n;
   T inf = numeric_limits<T>::max();
-  vector<vector<T>> capacity, cost;
-  vector<T> min_cost, h, prev;
+  vector<vector<Edge>> graph;
+  vector<T> min_cost, h, prevv, preve;
 
   // 設定したポテンシャルにより残余グラフ上で最短経路問題を解く。
   bool dijkstra(int s, int t)
@@ -81,13 +89,15 @@ private:
       pq.pop();
       if (min_cost[v] < c)
         continue;
-      for (int nv = 0; nv < n; ++nv)
+      for (int i = 0; i < (int)graph[v].size(); ++i)
       {
-        if (capacity[v][nv] > 0 && min_cost[nv] > min_cost[v] + cost[v][nv] + h[v] - h[nv])
+        Edge e = graph[v][i];
+        if (e.cap > 0 && min_cost[e.dst] > min_cost[v] + e.cost + h[v] - h[e.dst])
         {
-          min_cost[nv] = min_cost[v] + cost[v][nv] + h[v] - h[nv];
-          prev[nv] = v;
-          pq.emplace(min_cost[nv], nv);
+          min_cost[e.dst] = min_cost[v] + e.cost + h[v] - h[e.dst];
+          prevv[e.dst] = v;
+          preve[e.dst] = i;
+          pq.emplace(min_cost[e.dst], e.dst);
         }
       }
     }
