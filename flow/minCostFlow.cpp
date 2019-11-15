@@ -23,13 +23,16 @@ template <typename T>
 class MinCostFlow
 {
 public:
-  MinCostFlow(int n) : n(n), graph(n), prevv(n), preve(n) {}
+  MinCostFlow(int n) : n(n), capacity(n, vector<T>(n)), cost(n, vector<T>(n)), edges(n), prev(n) {}
 
-  void add_edge(int src, int dst, T cap, T cost)
+  void add_edge(int src, int dst, T cap, T cos)
   {
-    // 逆辺はインデックスで管理
-    graph[src].emplace_back(dst, cap, cost, graph[dst].size());
-    graph[dst].emplace_back(src, 0, -cost, graph[src].size() - 1);
+    capacity[src][dst] = cap;
+    capacity[dst][src] = 0;
+    cost[src][dst] = cos;
+    cost[dst][src] = -cos;
+    edges[src].push_back(dst);
+    edges[dst].push_back(src);
   }
 
   T min_cost_flow(int s, int t, T f)
@@ -46,34 +49,28 @@ public:
         h[i] += min_cost[i];
 
       T d = f;
-      for (int v = t; v != s; v = prevv[v])
-        d = min(d, graph[prevv[v]][preve[v]].cap);
+      for (int v = t; v != s; v = prev[v])
+        d = min(d, capacity[prev[v]][v]);
       // 今のステップではd流せるので、流す。
       f -= d;
       res += d * h[t];
       // 残余グラフを編集
-      for (int v = t; v != s; v = prevv[v])
+      for (int v = t; v != s; v = prev[v])
       {
-        // prevv[v] -> vにpreve[v]を使って流したので・・
-        Edge &e = graph[prevv[v]][preve[v]];
-        e.cap -= d;
-        graph[v][e.rev].cap += d;
+        capacity[prev[v]][v] -= d;
+        capacity[v][prev[v]] += d;
       }
     }
     return res;
   }
 
 private:
-  struct Edge
-  {
-    int dst, rev;
-    T cap, cost;
-    Edge(int dst, T cap, T cost, int rev) : dst(dst), cap(cap), cost(cost), rev(rev){};
-  };
   int n;
-  T inf = numeric_limits<T>::max();
-  vector<vector<Edge>> graph;
-  vector<T> min_cost, h, prevv, preve;
+  T inf = numeric_limits<T>::max() / 3;
+  vector<vector<T>> capacity, cost;
+  vector<vector<int>> edges;
+  vector<T> min_cost, h;
+  vector<int> prev;
 
   // 設定したポテンシャルにより残余グラフ上で最短経路問題を解く。
   bool dijkstra(int s, int t)
@@ -89,15 +86,13 @@ private:
       pq.pop();
       if (min_cost[v] < c)
         continue;
-      for (int i = 0; i < (int)graph[v].size(); ++i)
+      for (int nv : edges[v])
       {
-        Edge e = graph[v][i];
-        if (e.cap > 0 && min_cost[e.dst] > min_cost[v] + e.cost + h[v] - h[e.dst])
+        if (capacity[v][nv] > 0 && min_cost[nv] > min_cost[v] + cost[v][nv] + h[v] - h[nv])
         {
-          min_cost[e.dst] = min_cost[v] + e.cost + h[v] - h[e.dst];
-          prevv[e.dst] = v;
-          preve[e.dst] = i;
-          pq.emplace(min_cost[e.dst], e.dst);
+          min_cost[nv] = min_cost[v] + cost[v][nv] + h[v] - h[nv];
+          prev[nv] = v;
+          pq.emplace(min_cost[nv], nv);
         }
       }
     }

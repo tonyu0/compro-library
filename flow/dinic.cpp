@@ -12,16 +12,20 @@ using namespace std;
 // 3. 終点からdfsをすることで始点から終点に辿り着けないパスを探索しない。
 // 4. (高速化ではないが)DFSが一回で済むように工夫してある。
 
+// 動的木を用いるとdfsがO(VE) -> O(ElogV)になるらしい。それで全体がO(VElogV)に改善される。
+
 // Dinic O(|E||V|^2)
 template <typename T, bool directed>
 class Dinic
 {
 public:
-  Dinic(int n) : n(n), capacity(n, vector<T>(n)) {}
+  Dinic(int n) : n(n), capacity(n, vector<T>(n)), edges(n) {}
   void add_edge(int src, int dst, T cap)
   {
     capacity[src][dst] = cap;
     capacity[dst][src] = directed ? 0 : cap;
+    edges[src].push_back(dst);
+    edges[dst].push_back(src);
   }
 
   T max_flow(int s, int t)
@@ -41,6 +45,7 @@ private:
   int n;
   vector<int> level, start;
   vector<vector<T>> capacity;
+  vector<vector<int>> edges;
   // n: 頂点数
   // level: 残余グラフ上の始点からの各点の最短距離
   // start: 各点で探索した辺のインデックス、ステップごとに初期化
@@ -57,7 +62,7 @@ private:
     {
       int v = que.front();
       que.pop();
-      for (int nv = 0; nv < n; ++nv)
+      for (int nv : edges[v])
         if (capacity[v][nv] > 0 && level[nv] < 0)
         {
           level[nv] = level[v] + 1;
@@ -76,8 +81,9 @@ private:
       return limit;
 
     T res = 0;
-    for (int &nv = start[v]; nv < n; ++nv)
+    for (int &i = start[v]; i < (int)edges[v].size(); ++i)
     {
+      int nv = edges[v][i];
       // 距離が増加する向きの辺のみ調べる。
       if (capacity[nv][v] > 0 && level[v] == level[nv] + 1)
       {
@@ -157,7 +163,7 @@ void ARC092C()
   cout << dn.max_flow(N * 2, N * 2 + 1) << endl;
 }
 
-// Project Selection Problem: 
+// Project Selection Problem:
 // 各要素を2つの集合(選択)に分類する時、上手くグラフを作ると
 // 頂点を最適に始点側or終点側へと分離する問題、つまり最小カットに帰着できる。
 // https://atcoder.jp/contests/arc085/tasks/arc085_c
@@ -188,15 +194,15 @@ void ARC085E()
   // それを表すために容量∞の辺を張る。
   for (int i = 1; i <= N; ++i)
     for (int j = i * 2; j <= N; j += i)
-        dn.add_edge(i, j, numeric_limits<long>::max());
+      dn.add_edge(i, j, numeric_limits<long>::max());
   cout << sum - dn.max_flow(N + 1, N + 2) << endl;
 }
 
 int main()
 {
-  // GRL6A();
+  GRL6A();
   // ABC010D();
   // ARC092C();
-  ARC085E();
+  // ARC085E();
   return 0;
 }
