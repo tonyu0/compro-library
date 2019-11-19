@@ -15,9 +15,7 @@ using namespace std;
 // 流したらその経路上の容量を減らしてく。そのときに経路復元する必要がある。
 // 最短経路パートはベルマンフォードでもできるが、ダイクストラを使うためには負の辺を除去する工夫をする。
 
-// TODO:
-// https://atcoder.jp/contests/pakencamp-2018-day3/tasks/pakencamp_2018_day3_g
-// https://atcoder.jp/contests/abc137/tasks/abc137_d
+// TODO: http://judge.u-aizu.ac.jp/onlinejudge/description.jsp?id=2293
 
 template <typename T>
 class MinCostFlow
@@ -140,9 +138,59 @@ void ABC004D()
   cout << mcf.min_cost_flow(S, T, r + b + g) << '\n';
 }
 
+// 最大?費用流 + 流量n以下の解が欲しい時はs→tに容量無限コスト0の辺を貼る。
+// これはTLEするが高速化すると行けるらしい。
+// https://atcoder.jp/contests/abc137/tasks/abc137_d
+void ABC137D()
+{
+  long long n, m, a, b;
+  cin >> n >> m;
+  MinCostFlow<long long> flow(n + m + 3);
+  int s = n + m + 1, t = n + m + 2;
+  for (int i = 0; i < n; ++i)
+  {
+    cin >> a >> b;
+    for (int j = m - a; j >= 0; --j)
+      flow.add_edge(i, n + j, 1, -b);
+  }
+
+  for (int i = 0; i < n; ++i)
+    flow.add_edge(s, i, 1, 0);
+  for (int i = 0; i < m; ++i)
+    flow.add_edge(n + i, t, 1, 0);
+  flow.add_edge(s, t, 1LL << 60, 0);
+  cout << -flow.min_cost_flow(s, t, n);
+}
+
+// 割り当て問題
+// https://atcoder.jp/contests/pakencamp-2018-day3/tasks/pakencamp_2018_day3_g
+void other()
+{
+  long long N, M, K, X[1000], S, E;
+  cin >> N >> M >> K;
+  MinCostFlow<long long> flow(N + M + 2);
+  int s = N + M, t = N + M + 1;
+  for (int i = 0; i < N; ++i)
+    cin >> X[i];
+  for (int i = 0; i < M; ++i)
+  {
+    cin >> S >> E;
+    --S, --E;
+    for (int j = S; j <= E; ++j)
+      flow.add_edge(i, M + j, 1, X[j]);
+  }
+  for (int i = 0; i < M; ++i)
+    flow.add_edge(s, i, 1, 0);
+  for (int i = 0; i < N; ++i)
+    flow.add_edge(M + i, t, 1, 0);
+  cout << flow.min_cost_flow(s, t, K);
+}
+
 int main()
 {
   // GRL6B();
-  ABC004D();
+  // ABC004D();
+  // ABC137D();
+  other();
   return 0;
 }
