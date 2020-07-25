@@ -2,12 +2,9 @@
 #include <vector>
 using namespace std;
 
-vector<int>& zAlgorithm(const string &s) {
-  int i = 1;
-  int j = 0;
-  int n = (int)s.size();
+vector<int> zAlgorithm(const string &s) {
+  int i = 1, j = 0, n = (int)s.size();
   vector<int> ret(n);
-  
   ret[0] = n;
   while(i < n) {
     // jを使うことで先頭から、iから、の接頭辞の一致を見ている。
@@ -15,7 +12,7 @@ vector<int>& zAlgorithm(const string &s) {
     while(i + j < n && s[j] == s[i+j]) ++j;
     ret[i] = j; // ここでi番目先頭の場合の値は確定
     if(j == 0) { // jが進んでなかったら
-      ++j; continue;
+      ++i; continue;
     }
     // jはマッチしてるので、追加で・・
     // 必ず i > kとなるので、ret[k]は更新済み。
@@ -25,4 +22,22 @@ vector<int>& zAlgorithm(const string &s) {
     i += k, j -= k;
   }
   return ret;
+}
+
+void ABC141E() {
+  int N; string S;
+  cin >> N >> S;
+  int ans = 0;
+  for(int i = 0; i < N; ++i) {
+    auto z = zAlgorithm(S.substr(i, N-i));
+    for(int j = 0; j < (int)z.size(); ++j) {
+      if(z[j] <= j) ans = max(ans, z[j]);
+    }
+  }
+  cout << ans;
+}
+
+int main() {
+  ABC141E();
+  return 0;
 }
