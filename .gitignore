@@ -1,1 +1,8 @@
 .vscode
+*.lib
+*.pdb
+*.exp
+*.txt
+a
+build.sh
+main.cpp
