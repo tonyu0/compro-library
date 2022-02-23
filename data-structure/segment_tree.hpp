@@ -1,19 +1,18 @@
-#include <functional>
 #include <iostream>
 #include <vector>
 
-template <typename T, class F = std::function<T(const T&, const T&)>>
+template <typename T, T (*operation)(T, T), T (*identity)()>
 class segment_tree {
 public:
-  segment_tree(size_t n, T i, F f) : identity(i), operation(f) {
+  segment_tree(size_t n) {
     for (size = 1; size < n; size <<= 1) {}
-    data.assign(size * 2, identity);
+    data.assign(size * 2, identity());
   }
 
   // make segtree from vector
-  segment_tree(size_t n, vector<T>& a, T id, F f) : identity(id), operation(f) {
+  segment_tree(size_t n, vector<T> &a) {
     for (size = 1; size < n; size <<= 1) {}
-    data.assign(size * 2, identity);
+    data.assign(size * 2, identity());
     for (size_t i = 0; i < n; ++i) { data[i + size] = a[i]; }
     for (int i = size - 1; i > 0; --i) {
       data[i] = operation(data[i * 2], data[i * 2 + 1]);
@@ -27,8 +26,8 @@ public:
   }
   // [a,b)
   T query(size_t l, size_t r) {
-    T resL = identity;
-    T resR = identity;
+    T resL = identity();
+    T resR = identity();
     for (l += size, r += size; l < r; l >>= 1, r >>= 1) {
       if (l & 1) resL = operation(resL, data[l++]);
       if (r & 1) resR = operation(data[--r], resR);
@@ -43,6 +42,4 @@ public:
 private:
   size_t size;         // num of leaves
   std::vector<T> data; // root index is 1
-  T identity;
-  F operation;
 };

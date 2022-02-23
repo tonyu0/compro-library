@@ -36,6 +36,33 @@ public:
       }
     }
   }
+  // 単一始点 to 全点
+  vector<T> shortest_path_bfs(int s) {
+    vector<T> dist(tree.size(), tree.size());
+    queue<int> q;
+    q.push(s);
+    dist[s] = 0;
+    while (q.size() > 0) {
+      int v = q.front();
+      q.pop();
+      for (auto [nv, nc] : tree[v]) {
+        if (dist[nv] > dist[v] + nc) {
+          dist[nv] = dist[v] + nc;
+          q.push(nv);
+        }
+      }
+    }
+    return dist;
+  }
+  void shortest_path_dfs(int v, int p, vector<T> &dist) {
+    T res = 0;
+    for (auto [nv, nc] : tree[v]) {
+      if (nv == p) { continue; }
+      shortest_path_dfs(nv, v, dist);
+      res = max(res, dist[nv] + 1);
+    }
+    dist[v] = res;
+  }
 
 private:
   pair<T, int> get_diameter_inner(int cur, int parent) {

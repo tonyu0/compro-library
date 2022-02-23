@@ -57,6 +57,7 @@ public:
     }
   }
 
+  // check whether s contains string t using binary search
   bool find(std::string &t) {
     int ng = -1, ok = (int)s.length() - 1;
     while (ok - ng > 1) {

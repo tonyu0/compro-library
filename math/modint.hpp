@@ -37,13 +37,13 @@ public:
   constexpr bool operator==(const modint &rhs) const { return x == rhs.x; }
   constexpr bool operator!=(const modint &rhs) const { return x != rhs.x; }
   modint inverse() const {
-    int a = x, b = mod, u = 1, v = 0, t;
+    long long a = x, b = mod, u = 1, v = 0, t;
     while (b > 0) {
       t = a / b;
       swap(a -= t * b, b);
       swap(u -= t * v, v);
     }
-    return modint(u);
+    return modint(u + mod);
   }
 
   modint pow(long long exp) const {
@@ -55,10 +55,7 @@ public:
     }
     return res;
   }
-  // 変換演算子
   operator long long() const { return x; }
-  // modintを右オペランドにした<<演算子の非メンバ関数演算子オーバーロード
-  // friendによりostreamからmodint.xにアクセス可能
   friend ostream &operator<<(ostream &os, const modint &rhs) {
     return os << rhs.x;
   }
@@ -68,4 +65,42 @@ public:
     a = modint<mod>(t);
     return is;
   }
+};
+
+template <long long mod = 1000000007>
+class combination {
+  using mint = modint<mod>;
+
+public:
+  constexpr combination(size_t n) {
+    fac = new mint[n + 1];
+    inv = new mint[n + 1];
+    inv_fac = new mint[n + 1];
+
+    fac[0] = 1;
+    inv_fac[0] = 1;
+    inv[1] = 1;
+    // i * inv[i] = 1 mod p.
+    // p = p / i * i + p % i
+    // => p / i * i + p % i = 0 mod p
+    // => (p / i * -inv[p % i]) * i = 1 mod p
+    for (size_t i = 2; i <= n; ++i) { inv[i] -= inv[mod % i] * mint(mod / i); }
+    for (size_t i = 1; i <= n; ++i) {
+      fac[i] = fac[i - 1] * mint(i);
+      inv_fac[i] = inv_fac[i - 1] * inv[i];
+    }
+  }
+
+  mint operator()(size_t n, size_t k) {
+    if (n < k) { return 0; }
+    return fac[n] * inv_fac[n - k] * inv_fac[k];
+  }
+  ~combination() {
+    delete[] fac;
+    delete[] inv_fac;
+    delete[] inv;
+  }
+
+private:
+  mint *fac, *inv, *inv_fac;
 };
