@@ -8,9 +8,9 @@ using namespace std;
 class UndirectedGraph {
 public:
   UndirectedGraph(int n) : graph(n), ord(n), lowlink(n), used(n, false) {}
-  void add_edge(int u, int v, int c = 1) {
-    graph[u].emplace_back(v, c);
-    graph[v].emplace_back(u, c);
+  void add_edge(int u, int v, int w = 1) {
+    graph[u].emplace_back(v, w);
+    graph[v].emplace_back(u, w);
   }
   // e(u,v)が橋　<=> ord[u] < low[v]
   // 頂点vが関節点 <=> ord[u] <= low[v]となるvの子uが存在
