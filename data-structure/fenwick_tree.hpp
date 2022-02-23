@@ -12,11 +12,13 @@ public:
   explicit fenwick_tree(size_t n) : size(n), data(n) {}
   T query(int i) {
     T result = 0;
-    for (; i >= 0; i = (i & i + 1) - 1) result += data[i];
+    for (; i > 0; i &= i - 1) result += data[i - 1];
+    // for (; i >= 0; i = (i & i + 1) - 1) result += data[i];
+    // 22.02.23までちゃんと0-indexedになってなかった...
     return result;
   }
   void update(int i, T x) {
-    for (; i < size; i = i | i + 1) data[i] += x;
+    for (; i < size; i |= i + 1) data[i] += x;
   }
 };
 
