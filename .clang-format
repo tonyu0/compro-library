@@ -1,6 +1,5 @@
 BasedOnStyle: 'Google'
 AccessModifierOffset: -2
-AlignEscapedNewlinesLeft: true
 AlignConsecutiveAssignments: false
 AlignEscapedNewlinesLeft: true
 AlignTrailingComments: true 
