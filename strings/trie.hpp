@@ -6,52 +6,65 @@
 #include <vector>
 using namespace std;
 
-// 説明:
-// Trie木への文字の追加はO(|S|)、Trie木への文字列検索はO(|S|)で行える。
+// 文字列追加・検索 O(|S|)
 // マッチングに失敗した時の遷移をうまくやるとAho Corasick法になる。
-// trie木に渡すデータを数値列にした方がいいと思う
+template <int set_size = 26, char base_char = 'a'>
 class trie {
+  struct Node {
+    Node *next[set_size] = {nullptr};
+    // int count = 0; // if need node dup count
+    bool isleaf = false;
+  };
+
 public:
-  trie(std::size_t max_size) {
-    size = 1; // only root
-    next.assign(26, std::vector<int>(max_size, -1));
-    end.assign(max_size, false);
-  }
-
-  bool search(std::string s) {
-    int now = 0;
-    for (char c : s) {
-      if (next[c - 'a'][now] == -1) return false;
-      now = next[c - 'a'][now];
+  trie() : nodes(1, new Node) {} // add the root node
+  bool search(const std::string &s) {
+    Node *now = nodes[0];
+    for (const char &c : s) {
+      int i = c - base_char;
+      if (!now->next[i]) { return false; }
+      now = now->next[i];
     }
-    return end[now];
+    return now->isleaf;
   }
-
-  void insert(std::string s) {
-    int now = 0;
-    for (char c : s) {
-      if (next[c - 'a'][now] == -1) next[c - 'a'][now] = size++;
-      now = next[c - 'a'][now];
+  void insert(const std::string &s) {
+    Node *now = nodes[0];
+    for (const char &c : s) {
+      int i = c - base_char;
+      if (!now->next[i]) {
+        nodes.push_back(new Node);
+        now->next[i] = nodes.back();
+      }
+      // now->next[c]->count++;
+      now = now->next[i];
     }
-    end[now] = true;
+    now->isleaf = true;
   }
 
 private:
-  std::vector<std::vector<int>> next;
-  std::vector<bool> end;
-  std::size_t size;
+  std::vector<Node *> nodes;
 };
 
-// JOI2010 DNA Synthesizer
+// https://atcoder.jp/contests/joisc2010/tasks/joisc2010_dna
 void JOI2010DNA() {
   int n;
   string S, s[50505];
   cin >> n >> S;
-  trie trie('A');
-  map<char, int> m;
-  m['A'] = 0, m['T'] = 1, m['C'] = 2, m['G'] = 3;
+  for (char &c : S) {
+    if (c == 'G')
+      c = 'B';
+    else if (c == 'T')
+      c = 'D';
+  }
+  trie<4, 'A'> trie;
   for (int i = 0; i < n; ++i) {
     cin >> s[i];
+    for (char &c : s[i]) {
+      if (c == 'G')
+        c = 'B';
+      else if (c == 'T')
+        c = 'D';
+    }
     reverse(s[i].begin(), s[i].end());
     trie.insert(s[i]);
   }
@@ -73,27 +86,3 @@ void JOI2010DNA() {
 }
 
 // https://yukicoder.me/problems/no/430
-void YUKI430() {
-  string S, T;
-  int N;
-  cin >> S >> N;
-  trie trie('A');
-  for (int i = 0; i < N; ++i) {
-    cin >> T;
-    trie.insert(T);
-  }
-
-  int ans = 0;
-  for (int i = 0; i < (int)S.size(); ++i) {
-    ans += trie.search(S.substr(i, (int)S.size() - i));
-  }
-  cout << ans << endl;
-}
-
-int main() {
-  cin.tie(0);
-  ios_base::sync_with_stdio(false);
-  // JOI2010DNA();
-  // YUKI430();
-  return 0;
-}
