@@ -1,3 +1,4 @@
+#include <vector>
 
 template <long long mod = 1000000007>
 class modint {
@@ -72,11 +73,7 @@ class combination {
   using mint = modint<mod>;
 
 public:
-  constexpr combination(size_t n) {
-    fac = new mint[n + 1];
-    inv = new mint[n + 1];
-    inv_fac = new mint[n + 1];
-
+  constexpr combination(size_t n) : fac(n + 1), inv(n + 1), inv_fac(n + 1) {
     fac[0] = 1;
     inv_fac[0] = 1;
     inv[1] = 1;
@@ -95,12 +92,8 @@ public:
     if (n < k) { return 0; }
     return fac[n] * inv_fac[n - k] * inv_fac[k];
   }
-  ~combination() {
-    delete[] fac;
-    delete[] inv_fac;
-    delete[] inv;
-  }
+  mint factrial(size_t n) { return fac[n]; }
 
 private:
-  mint *fac, *inv, *inv_fac;
+  std::vector<mint> fac, inv, inv_fac;
 };
