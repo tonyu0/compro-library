@@ -1,13 +1,25 @@
 #pragma once
-// T keyは大小関係が定義できる必要がある vectorものる?
+// T needs ==, >, <. maybe can use vector?
+// this avl_tree is only for procon, because this skips delete to speed up
+// when use map ver, remove comment out of /* */
 
+// verify:
+// - set ver(with rank())
+//    https://atcoder.jp/contests/arc033/submissions/57849054
+// - map ver
+//    https://judge.yosupo.jp/submission/236074
+
+/*template <typename T, typename U>*/
 template <typename T>
 class avl_tree {
 public:
   struct node {
     T key;
+    /* U value; */
     int size, height; // subtree size / height
     node *child[2];   // 0: small, 1: large
+    /* node(const T &key,const U
+     * &value):key(key),value(value),size(1),height(1){ */
     node(const T &key) : key(key), size(1), height(1) {
       child[0] = child[1] = nullptr;
     }
@@ -20,7 +32,17 @@ public:
     node *res = find(root, key);
     return res ? res->key : null;
   }
+  /* std::pair<T, U> find(const T &key) {
+    node *res = find(root, key);
+    return res ? std::make_pair(res->key, res->value)
+               : std::make_pair(null, (U)0);
+  } */
+
   void insert(const T &key) { root = insert(root, new node(key)); }
+  /* void insert(const T &key, const U &value) {
+    root = insert(root, new node(key, value));
+  } */
+
   void erase(const T &key) { root = erase(root, key); }
   // get k-th smallest number (0-indexed): O(logN)
   T rank(int k) const {
@@ -46,8 +68,9 @@ private:
     if (t == nullptr) { return x; } // insert x here
 
     if (x->key == t->key) {
-      // key duplicate
-      return x;
+      // key duplicate, reject inserting x
+      /* t->value = x->value; */
+      return t;
     }
 
     if (x->key < t->key) {
