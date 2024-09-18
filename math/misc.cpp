@@ -34,6 +34,22 @@ vector<pair<char, int>> RLE(string s) {
   return ret;
 }
 
+// 座標圧縮
+template <typename T>
+class CoordinateCompression {
+  vector<T> compressed;
+  CoordinateCompression(const vector<T>& to_compress)
+    : compressed(to_compress) {
+    sort(compressed.begin(), compressed.end());
+    compressed.erase(unique(compressed.begin(), compressed.end()),
+                     compressed.end());
+  }
+  int index(T val) {
+    return lower_bound(compressed.begin(), compressed.end(), val) -
+           compressed.begin();
+  }
+};
+
 /*
 A からスタートして、D を足していくとき、個数 mod B の最大は，g = gcd(B, D)
 として B−g+(A mod g) となり，これを C と比較すればよいです。
