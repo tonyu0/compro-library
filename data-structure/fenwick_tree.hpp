@@ -1,31 +1,37 @@
 #include <vector>
 
 // Binary Indexed Tree
-// 配列への更新、配列の左端からの演算(アーベル群上の演算ならいける)
+// https://ioinformatics.org/journal/v9_2015_39_44.pdf
+// update(i, x): update i-th element to x
+// query(i): returns a result of applying operations to [1, i] (1-indexed)
+// O(logn) each
+
 // Points:
 // 各数字のLSBは区間の長さを表す。LSBはi&-iみたいに簡単に取れるので左端から　すべて埋められる
 // 更新時は、被覆される要素すべて更新　たかだかlogn　単純に区間のサイズを足し引きして必要なところを更新している。
-// 何をもって非福となすか
-// 100 なら　010 001
-
-// i & -i is i's LSB, and this leads to node's height
-// ex1. 3: 0011 -3: 1101 (-3 = ~3+1)
-// ex2. 4: 0100 -4: 1100
+// -i = ~i + 1
 
 // TODO:
-// 2本もって区間加算するやつ (あり本にもある)
-// 2次元BIT
+// 抽象化 任意の区間演算ならアーベル群　sum xor など
+//    [1,i]だけならmin,maxもいける(こいつらは逆操作できない)、だがBIT2本でmin,maxも行ける模様?
+// BIT2本で区間加算するやつ　→　クエリをバラしてやるところが遅延評価セグ木っぽい？
+// 必要なところだけ作るBIT　→　辞書配列に持たせる　indexでかくても各要素へのアクセスが少ないパターン
+// 多次元BITのverify
 
-// update, query O(logn)
-// 0-indexed
+// verify:
+//  - lower_bound(): https://atcoder.jp/contests/arc033/submissions/58037272
+
 template <typename T, bool zero_indexed = true>
 class fenwick_tree {
-  size_t size, depth;
+  int size, depth;
   std::vector<T> data;
 
 public:
   fenwick_tree() = default;
-  explicit fenwick_tree(size_t n) : size(n), data(n) {}
+  explicit fenwick_tree(int n) : size(n), depth(0), data(n) {
+    while ((1 << depth) < (int)size) { ++depth; }
+  }
+  // prefix sum [0, i) (0-indexed)
   T query(int i) {
     T result = 0;
     // i -= i&-i: i&-i is the LSB of i, so subtract it from i
@@ -48,23 +54,45 @@ public:
     }
   }
 
-  std::pair<size_t, T> lower_bound(T x) {
-    if (depth == 0) {
-      while ((1 << (depth + 1)) <= size) ++depth;
-    }
+  std::pair<int, T> lower_bound(T x) {
     // 累積和がx以上になる最小のindexと、その直前までの累積和
+    // 二分木上の二分探索と同じ
     T sum = 0;
-    size_t pos = 0;
-    // 上の階層から、必要か不必要か判定して足し合わせる
-    // posのビットを上から埋めていく
+    int pos = 0;
     for (int i = depth; i >= 0; --i) {
-      size_t j = pos + (1 << i);
-      if (j <= size && sum + data[j - 1] < x) {
-        // 右側を採用
-        sum += data[j - 1];
+      int j = pos + (1 << i);
+      if (j <= size && sum + data[j - zero_indexed] < x) {
+        // 答えは右側にある
+        sum += data[j - zero_indexed]; // ←↑抽象化ポイント?
         pos += 1 << i;
       }
     }
-    return std::make_pair(pos + 1, sum);
+    return std::make_pair(pos + 1 - zero_indexed, sum);
+  }
+};
+
+template <typename T>
+class fenwick_tree_2d {
+  int height, width;
+  std::vector<std::vector<T>> data;
+
+public:
+  fenwick_tree_2d() = default;
+  explicit fenwick_tree_2d(int h, int w) : height(h), width(w) {
+    data.assign(height, std::vector<T>(width));
+  }
+
+  void update(int h, int w, T x) {
+    for (int i = h; i < height; i += i & -i) {
+      for (int j = w; j < width; j += j & -j) { data[i][j] += x; }
+    }
+  }
+  // [1, h] and [1, w]
+  T query(int h, int w) {
+    T result = 0;
+    for (int i = h; i > 0; i -= i & -i) {
+      for (int j = w; j > 0; j -= j & -j) { result += data[i][j]; }
+    }
+    return result;
   }
 };

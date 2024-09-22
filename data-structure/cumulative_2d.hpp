@@ -1,10 +1,11 @@
+#include <iostream>
 #include <vector>
 
 template <typename T>
 class Cumulative2D {
 public:
   Cumulative2D(size_t h, size_t w)
-    : height(h), width(w), data(h + 1, vector<T>(w + 1)){};
+    : height(h), width(w), data(h + 1, std::vector<T>(w + 1)){};
   void set(size_t y, size_t x, T val) {
     // assert(0<=h&&h<height&&0<=w&&w<width);
     data[y + 1][x + 1] = val;
