@@ -3,6 +3,8 @@
 *.pdb
 *.exp
 *.txt
+*.o
+*.s
 a
 build.sh
 main.cpp

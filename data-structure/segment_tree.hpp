@@ -1,4 +1,3 @@
-#include <iostream>
 #include <vector>
 
 template <typename T, T (*operation)(T, T), T (*identity)()>
@@ -10,7 +9,7 @@ public:
   }
 
   // make segtree from vector
-  segment_tree(size_t n, vector<T> &a) {
+  segment_tree(size_t n, const std::vector<T> &a) {
     for (size = 1; size < n; size <<= 1) {}
     data.assign(size * 2, identity());
     for (size_t i = 0; i < n; ++i) { data[i + size] = a[i]; }
@@ -19,10 +18,11 @@ public:
     }
   }
 
-  void update(size_t i, T value) {
-    for (data[i += size] = value; i >>= 1;) {
-      data[i] = operation(data[i * 2], data[i * 2 + 1]);
-    }
+  void update(size_t i, T value, bool override = false) {
+    i += size;
+    data[i] = override ? value : operation(data[i], value);
+
+    for (; i >>= 1;) { data[i] = operation(data[i * 2], data[i * 2 + 1]); }
   }
   // [a,b)
   T query(size_t l, size_t r) {
