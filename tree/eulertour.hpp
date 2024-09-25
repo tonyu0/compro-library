@@ -5,10 +5,6 @@
 
 // Euler tour:
 //  - 頂点をdfs順にたどりながら配列に変換する。部分木に対するクエリなどが可能
-
-// TODO:
-//  - https://judge.yosupo.jp/problem/vertex_add_path_sum
-//      根からのコストを管理する配列が別途必要?
 // verify:
 //  - get_lca: https://atcoder.jp/contests/abc014/submissions/58073831
 //  - get_subtree_order: https://judge.yosupo.jp/submission/237633

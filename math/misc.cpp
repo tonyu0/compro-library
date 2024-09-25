@@ -37,17 +37,20 @@ vector<pair<char, int>> RLE(string s) {
 // 座標圧縮
 template <typename T>
 class CoordinateCompression {
-  vector<T> compressed;
-  CoordinateCompression(const vector<T>& to_compress)
-    : compressed(to_compress) {
-    sort(compressed.begin(), compressed.end());
-    compressed.erase(unique(compressed.begin(), compressed.end()),
-                     compressed.end());
+  std::vector<T> index2value;
+
+public:
+  CoordinateCompression(const vector<T>& _index2value)
+    : index2value(_index2value) {
+    sort(index2value.begin(), index2value.end());
+    index2value.erase(unique(index2value.begin(), index2value.end()),
+                      index2value.end());
   }
-  int index(T val) {
-    return lower_bound(compressed.begin(), compressed.end(), val) -
-           compressed.begin();
+  int index(T value) {
+    return lower_bound(index2value.begin(), index2value.end(), value) -
+           index2value.begin();
   }
+  T value(int index) { return index2value[index]; }
 };
 
 /*
