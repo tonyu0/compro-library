@@ -7,35 +7,27 @@ using namespace std;
 class StronglyConnectedComponents {
 public:
   StronglyConnectedComponents(int n)
-      : n(n), g(n), rg(n), used(n), components(n) {}
+    : n(n), g(n), rg(n), used(n), components(n) {}
 
   void add_edge(int from, int to) { g[from].push_back(to); }
 
   void build() {
     for (int from = 0; from < n; ++from) {
-      for (int to : g[from]) {
-        rg[to].push_back(from);
-      }
+      for (int to : g[from]) { rg[to].push_back(from); }
     }
 
     // dfs1
     for (int v = 0; v < n; ++v) {
-      if (used[v] == 0) {
-        dfs1(v);
-      }
+      if (used[v] == 0) { dfs1(v); }
     }
     // dfs2
     reverse(order.begin(), order.end());
     for (int v : order) {
-      if (used[v] == 1) {
-        dfs2(v, k++);
-      }
+      if (used[v] == 1) { dfs2(v, k++); }
     }
     // collecting result
     scc_result.resize(k);
-    for (int v = 0; v < n; ++v) {
-      scc_result[components[v]].push_back(v);
-    }
+    for (int v = 0; v < n; ++v) { scc_result[components[v]].push_back(v); }
   }
   int size() { return k; }
   int component_of(int x) { return components[x]; } // topological sorted
@@ -53,9 +45,7 @@ private:
   void dfs1(int v) {
     used[v] = 1;
     for (int nv : g[v]) {
-      if (used[nv] == 0) {
-        dfs1(nv);
-      }
+      if (used[nv] == 0) { dfs1(nv); }
     }
     order.push_back(v);
   }
@@ -64,9 +54,7 @@ private:
     used[v] = 2;
     components[v] = k;
     for (int nv : rg[v]) {
-      if (used[nv] == 1) {
-        dfs2(nv, k);
-      }
+      if (used[nv] == 1) { dfs2(nv, k); }
     }
   }
 };
@@ -97,9 +85,7 @@ public:
   bool satisfiable() {
     scc.build();
     for (int i = 0; i < n; ++i) {
-      if (scc.same(i, i + n)) {
-        return false;
-      }
+      if (scc.same(i, i + n)) { return false; }
     }
     return true;
   }

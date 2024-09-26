@@ -1,4 +1,7 @@
 #pragma once
+#include <queue>
+#include <vector>
+
 // T needs ==, >, <. maybe can use vector?
 // this avl_tree is only for procon, because this skips delete to speed up
 // when use map ver, remove comment out of /* */
@@ -51,6 +54,19 @@ public:
   }
   // T order_of_key(int x) const {} // TODO
   // T lower_bound(int l, int r) const {} // TODO
+  std::vector<int> traverse() {
+    std::vector<int> res;
+    std::queue<node *> q;
+    if (root != nullptr) { q.push(root); }
+    while (q.size() > 0) {
+      node *v = q.front();
+      q.pop();
+      res.push_back(v->key);
+      if (v->child[0] != nullptr) { q.push(v->child[0]); }
+      if (v->child[1] != nullptr) { q.push(v->child[1]); }
+    }
+    return std::move(res);
+  }
 
 private:
   node *find(node *t, const T &key) {
