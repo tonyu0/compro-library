@@ -66,19 +66,23 @@ private:
 // https://atcoder.jp/contests/code-thanks-festival-2017-open/submissions/58277102
 // disjoint set
 
+// verify:
+// https://atcoder.jp/contests/code-thanks-festival-2017-open/submissions/58278868
 class disjoint_set_partially_persistent {
   std::vector<int> par, time;
+  // par[x] := the parent of x
+  // time[x] := the time when x's parent was determined
   std::vector<std::vector<std::pair<int, int>>> history;
 
 public:
   disjoint_set_partially_persistent(int size)
-    : par(size, -1), time(size, 1e9), history(size) {
-    for (auto &el : history) { el.emplace_back(-1, -1); }
-  }
+    : par(size, -1)
+    , time(size, 1e9)
+    , history(size, std::vector<std::pair<int, int>>(1, {0, 1})) {}
 
   bool merge(int t, int x, int y) {
-    x = find(t, x);
-    y = find(t, y);
+    x = root(t, x);
+    y = root(t, y);
     if (x == y) { return false; }
     if (par[x] > par[y]) { std::swap(x, y); }
     par[x] += par[y];
@@ -88,17 +92,20 @@ public:
     return true;
   }
 
-  int find(int t, int x) {
-    if (t < time[x]) return x;
-    return find(t, par[x]);
+  // root: 時刻tでのxの親　
+  int root(int t, int x) {
+    // tが、xの親が確定した時刻より前 → まだpar[x]はxの親ではないのでxを返す
+    if (t < time[x]) { return x; }
+    // そうでないならxの親を調べる
+    return root(t, par[x]);
   }
-
+  // sizeOf: 時刻tでのxが含まれる集合のサイズ
   int sizeOf(int t, int x) {
-    x = find(t, x);
+    x = root(t, x);
     return -prev(lower_bound(history[x].begin(), history[x].end(),
                              std::make_pair(t, 0)))
               ->second;
   }
-
-  bool same(int t, int x, int y) { return find(t, x) == find(t, y); }
+  // same: 時刻tでx,yが同じ集合に属するか
+  bool same(int t, int x, int y) { return root(t, x) == root(t, y); }
 };

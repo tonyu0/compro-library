@@ -1,11 +1,8 @@
 #pragma once
 
-// Trie木は文字の各要素をノードにして、各ノードから最大26ノードへとつながる木を作る。
-// 複数文字列からTrie木を構築して、文字の検索を高速化する。
-// 数字の大小も、二進展開すると頭から辞書順みたいなところがある
-// 二進展開した時のビット長をnとすると、深さはn,
-// 各ノードでの分岐が最大2である木を構築する。
-// ビット各桁に対する操作が可能、今のところ形になりそうなのは各要素にxorしたうえで何かを求めるやつ
+// データ管理方法は普通のTrieと同じで、数字を2進展開したものを管理する。
+// その性質から、主に数字の大小に関わる、色々な操作ができる。
+// 今のところ形になりそうなのは各要素にxorしたうえで何かを求めるやつ
 
 // https://judge.yosupo.jp/submission/64573
 
@@ -34,11 +31,11 @@ private:
     Node() : num(0), left(nullptr), right(nullptr) {}
   };
 
-  Node* root;
+  Node *root;
 
   // ノードを追加 既にある場合はカウント追加のみ　右からb桁目が0 or
   // 1で左か右にノードを作るか決定
-  Node* add(Node* n, int val, int b = B - 1) {
+  Node *add(Node *n, int val, int b = B - 1) {
     if (n == nullptr) { n = new Node; }
     n->num++;
     if (b < 0) { return n; }
@@ -51,7 +48,7 @@ private:
     return n;
   }
 
-  Node* remove(Node* n, int val, int b = B - 1) {
+  Node *remove(Node *n, int val, int b = B - 1) {
     if (n->num > 0) { n->num--; }
     if (n->num == 0) { return nullptr; }
     if (b < 0) { return n; }
@@ -65,15 +62,16 @@ private:
   }
 
   // get k th smallest number (0-indexed)
-  int get(Node* n, int k, int b = B - 1) {
+  int get(Node *n, int k, int b = B - 1) {
     if (b < 0) { return 0; }
 
     int tmp = n->left ? n->left->num : 0;
+    // b桁目が0である要素の数がkより少ないなら、そのままleftへ。そうでないなら、leftの要素数を除いたうえでrightへ
     return (k < tmp ? get(n->left, k, b - 1)
                     : get(n->right, k - tmp, b - 1) | (1 << b));
   }
 
-  int get_xor_min(Node* n, int val, int b = B - 1) {
+  int get_xor_min(Node *n, int val, int b = B - 1) {
     if (b < 0) { return 0; }
     // valの右からb桁目が立ってる
     if (val >> b & 1) {
@@ -91,7 +89,7 @@ private:
   }
 
   // count the num less than val
-  int search(Node* n, int val, int b = B - 1) {
+  int search(Node *n, int val, int b = B - 1) {
     if (n == nullptr || b < 0) { return 0; }
     if (val >> b & 1) {
       return search(n->right, val, b - 1) + (n->left ? n->left->num : 0);
