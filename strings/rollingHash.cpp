@@ -3,20 +3,13 @@
 #include <vector>
 using namespace std;
 
-// 説明:
-// ハッシュ値の累積和を取る(O(|S|))ことである区間の文字列比較をO(1)で行う。
-// TODO:
+// ハッシュ値を使用したO(1)の同値性チェック
+// https://en.wikipedia.org/wiki/Rabin_fingerprint
+//
+// 主にハッシュ値の衝突が話題になる
 // https://yukicoder.me/problems/no/3015
-// mod a, base bのもとで、hash値が同じになるような2つの文字列を出力する
+// https://yukicoder.me/problems/804
 
-// 参考
-// https://qiita.com/keymoon/items/11fac5627672a6d6a9f6#_reference-b0f37d19c7cecde124e3
-// モンゴメリ乗算？
-// i128 t = a * b;
-// t = (t + ((t & MOD) << 61) - (t & MOD)) >> 61;
-// if(t >= MOD) return t - MOD;
-
-// Hackを防ぐためbaseはランダム(baseが分かったところでhackする方法を知らないが)
 const int bases[64] = {257, 262, 266, 275, 276, 281, 285, 290, 296, 302, 306,
                        310, 311, 313, 323, 333, 344, 345, 350, 357, 367, 370,
                        373, 402, 423, 425, 431, 440, 442, 443, 454, 457, 458,
@@ -32,7 +25,7 @@ const unsigned long long base =
 class rolling_hash {
   using u64 = unsigned long long;
   vector<u64> hash, power;
-  rolling_hash(const string& s) {
+  rolling_hash(const string &s) {
     size_t n = s.size();
     hash.assign(n + 1, 0);
     power.assign(n + 1, 1);
@@ -45,6 +38,8 @@ class rolling_hash {
   }
 
   inline u64 mul(u64 a, u64 b) {
+    // mod 2^61-1:  https://qiita.com/keymoon/items/11fac5627672a6d6a9f6
+    // モンゴメリ乗算?(未習)
     // __uint128_t res = __uint128_t(a) * b;
     u64 au = a >> 31;
     u64 ad = a & mask31;
@@ -60,8 +55,9 @@ class rolling_hash {
   }
 
   // [l, r)
-  // hash(s[0..7])=1234567,
-  // hash(s[0..3])=123とすると、hash(s[3..7])=hash(s[0..7])-hash(s[0..3])*10^4
+  // s[0..7]="abcdef", s[0..3]="abc"とする
+  // hash(s[3..7])=hash(s[0..7])-hash(s[0..3])*10^4
+  // h = {0, a*s1, a*a*s1 + a*s2, a*a*a*s1 + a*a*s2 + a*s3,...}からもわかる
   u64 get(int l, int r) {
     u64 res = (mod + hash[r] - mul(hash[l], power[r - l]));
     if (res >= mod) return res - mod;
