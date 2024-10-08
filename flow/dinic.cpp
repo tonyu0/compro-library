@@ -16,7 +16,7 @@ using namespace std;
 // O(ElogV)になるらしい。それで全体がO(VElogV)に改善される。
 
 // Dinic O(|E||V|^2)
-template <typename T, bool directed>
+template <typename T, bool directed = false>
 class Dinic {
 public:
   Dinic(int n) : n(n), capacity(n, vector<T>(n)), edges(n) {}
@@ -26,6 +26,8 @@ public:
     edges[src].push_back(dst);
     edges[dst].push_back(src);
   }
+
+  T get_capacity(int src, int dst) { return capacity[src][dst]; }
 
   T max_flow(int s, int t) {
     T flow = 0;
