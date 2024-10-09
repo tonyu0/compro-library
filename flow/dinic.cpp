@@ -7,7 +7,7 @@ using namespace std;
 // 説明:
 // 最大流問題を解く。
 // 高速化ポイント:
-// 1. level配列により残余グラフ上の最短経路
+// 1. dist配列により残余グラフ上の最短経路
 // 2. start配列により探索した辺を管理することで同じ辺を何度も探索しない。
 // 3. 終点からdfsをすることで始点から終点に辿り着けないパスを探索しない。
 // 4. (高速化ではないが)DFSが一回で済むように工夫してある。
@@ -16,18 +16,15 @@ using namespace std;
 // O(ElogV)になるらしい。それで全体がO(VElogV)に改善される。
 
 // Dinic O(|E||V|^2)
-template <typename T, bool directed = false>
+template <typename T, bool directed = true>
 class Dinic {
 public:
-  Dinic(int n) : n(n), capacity(n, vector<T>(n)), edges(n) {}
+  Dinic(int n) : n(n), edges(n) {}
   void add_edge(int src, int dst, T cap) {
-    capacity[src][dst] = cap;
-    capacity[dst][src] = directed ? 0 : cap;
-    edges[src].push_back(dst);
-    edges[dst].push_back(src);
+    // 逆に流し戻すために逆辺の情報を持つ必要があるが、隣接リストで持つために逆辺を示すインデックスをいい感じに持たせる
+    edges[src].emplace_back(dst, edges[dst].size(), cap);
+    edges[dst].emplace_back(src, edges[src].size() - 1, directed ? 0 : cap);
   }
-
-  T get_capacity(int src, int dst) { return capacity[src][dst]; }
 
   T max_flow(int s, int t) {
     T flow = 0;
@@ -42,30 +39,28 @@ public:
 
 private:
   int n;
-  vector<int> level, start;
-  vector<vector<T>> capacity;
-  vector<vector<int>> edges;
+  std::vector<int> dist, start;
+  std::vector<std::vector<std::tuple<int, size_t, T>>> edges;
   // n: 頂点数
-  // level: 残余グラフ上の始点からの各点の最短距離
+  // dist: 残余グラフ上の始点からの各点の最短距離
   // start: 各点で探索した辺のインデックス、ステップごとに初期化
-  // capacity: 隣接行列で辺の容量を保持
 
   // 残余グラフ上でsからの最短距離を計算する。tに辿り着けなかったらfalseを返す。
   bool bfs(int s, int t) {
-    level.assign(n, -1);
+    dist.assign(n, -1);
     queue<int> que;
-    level[s] = 0;
+    dist[s] = 0;
     que.push(s);
     while (!que.empty()) {
       int v = que.front();
       que.pop();
-      for (int nv : edges[v])
-        if (capacity[v][nv] > 0 && level[nv] < 0) {
-          level[nv] = level[v] + 1;
+      for (auto &[nv, _, nc] : edges[v])
+        if (nc > 0 && dist[nv] < 0) {
+          dist[nv] = dist[v] + 1;
           que.push(nv);
         }
     }
-    return level[t] != -1;
+    return dist[t] != -1;
   }
 
   // 逆辺をたどる。
@@ -76,14 +71,16 @@ private:
 
     T res = 0;
     for (int &i = start[v]; i < (int)edges[v].size(); ++i) {
-      int nv = edges[v][i];
+      // わかりづらいがnvのほうがsに近い(わかりやすくすべき?)
+      auto &[nv, ni, ncap] = edges[v][i];
+      auto &[_v, _i, cap] = edges[nv][ni];
       // 距離が増加する向きの辺のみ調べる。
-      if (capacity[nv][v] > 0 && level[v] == level[nv] + 1) {
+      if (cap > 0 && dist[v] == dist[nv] + 1) {
         // d: 流せた量
-        T d = dfs(nv, s, min(limit, capacity[nv][v]));
+        T d = dfs(nv, s, min(limit, cap));
         if (d > 0) {
-          capacity[nv][v] -= d;
-          capacity[v][nv] += d;
+          cap -= d;
+          ncap += d;
           res += d;
           limit -= d;
           if (limit == 0) break;
