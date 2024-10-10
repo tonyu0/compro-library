@@ -15,33 +15,37 @@ using namespace std;
 // 動的木を用いるとdfsがO(VE) ->
 // O(ElogV)になるらしい。それで全体がO(VElogV)に改善される。
 
+// verify: https://judge.yosupo.jp/submission/241259
+
 // Dinic O(|E||V|^2)
 template <typename T, bool directed = true>
 class Dinic {
+  using Edge = std::tuple<int, size_t, T>;
+
 public:
   Dinic(int n) : n(n), edges(n) {}
-  void add_edge(int src, int dst, T cap) {
+  void add_edge(int from, int to, T cap) {
     // 逆に流し戻すために逆辺の情報を持つ必要があるが、隣接リストで持つために逆辺を示すインデックスをいい感じに持たせる
-    edges[src].emplace_back(dst, edges[dst].size(), cap);
-    edges[dst].emplace_back(src, edges[src].size() - 1, directed ? 0 : cap);
+    edges[from].emplace_back(to, edges[to].size(), cap);
+    edges[to].emplace_back(from, edges[from].size() - 1, directed ? 0 : cap);
   }
 
   T max_flow(int s, int t) {
     T flow = 0;
     while (bfs(s, t)) {
-      // 無駄な辺を何度も調べないために、各頂点に既に調べた辺を持たせる。
-      // 各頂点でdfsを続きからできるようにするイメージ
       start.assign(n, 0);
       flow += dfs(t, s, numeric_limits<T>::max());
     }
     return flow;
   }
 
+  // can check capacity after processing if use after max_flow()
+  const std::vector<std::vector<Edge>> &get_edges() const { return edges; }
+
 private:
   int n;
   std::vector<int> dist, start;
-  std::vector<std::vector<std::tuple<int, size_t, T>>> edges;
-  // n: 頂点数
+  std::vector<std::vector<Edge>> edges;
   // dist: 残余グラフ上の始点からの各点の最短距離
   // start: 各点で探索した辺のインデックス、ステップごとに初期化
 
@@ -66,24 +70,24 @@ private:
   // 逆辺をたどる。
   // limit: 現時点で流せる最大量
   // 1ステップでvから流せる量をresにまとめることで、DFSが一回で済む。
-  T dfs(int v, int s, T limit) {
-    if (v == s) return limit;
+  T dfs(int to, int s, T limit) {
+    if (to == s) return limit;
+    // s - ... - from - to - ... - t
 
     T res = 0;
-    for (int &i = start[v]; i < (int)edges[v].size(); ++i) {
-      // わかりづらいがnvのほうがsに近い(わかりやすくすべき?)
-      auto &[nv, ni, ncap] = edges[v][i];
-      auto &[_v, _i, cap] = edges[nv][ni];
+    // 無駄な辺を何度も調べないために、各頂点に既に調べた辺を持たせる。
+    // 各頂点でdfsを続きからできるようにするイメージ
+    for (int &i = start[to]; i < static_cast<int>(edges[to].size()); ++i) {
+      auto &[from, revidx, revcap] = edges[to][i];
+      auto &[_to, _revidx, cap] = edges[from][revidx];
       // 距離が増加する向きの辺のみ調べる。
-      if (cap > 0 && dist[v] == dist[nv] + 1) {
-        // d: 流せた量
-        T d = dfs(nv, s, min(limit, cap));
-        if (d > 0) {
+      if (cap > 0 && dist[from] == dist[to] - 1) {
+        if (T d = dfs(from, s, min(limit, cap)); d > 0) {
           cap -= d;
-          ncap += d;
+          revcap += d;
           res += d;
           limit -= d;
-          if (limit == 0) break;
+          if (limit == 0) { break; }
         }
       }
     }
