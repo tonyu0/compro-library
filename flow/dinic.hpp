@@ -15,6 +15,7 @@
 
 // 使用例:
 // - bipartite matching1:  https://judge.yosupo.jp/submission/241259
+//    -> TODO: Hopcroft-Karp
 // - bipartite matching2: https://atcoder.jp/contests/arc092/submissions/8404542
 // - 最小カット=最大流: https://atcoder.jp/contests/abc010/submissions/8441351
 // - ProjectSelectionProblem:
@@ -53,6 +54,7 @@ private:
   // dist: 残余グラフ上の始点からの各点の最短距離
   // start: 各点で探索した辺のインデックス、ステップごとに初期化
 
+  // O(V)
   // 残余グラフ上でsからの最短距離を計算する。tに辿り着けなかったらfalseを返す。
   bool bfs(int s, int t) {
     dist.assign(n, -1);
@@ -75,11 +77,11 @@ private:
   // limit: 現時点で流せる最大量
   // 1ステップでvから流せる量をresにまとめることで、DFSが一回で済む。
   T dfs(int to, int s, T limit) {
-    if (to == s) return limit;
+    if (to == s) { return limit; }
     // s - ... - from - to - ... - t
 
     T res = 0;
-    // 無駄な辺を何度も調べないために、各頂点に既に調べた辺を持たせる。
+    // 無駄な辺を何度も調べないために、各頂点に既に調べた辺を持たせる。(start)
     // 各頂点でdfsを続きからできるようにするイメージ
     for (int &i = start[to]; i < static_cast<int>(edges[to].size()); ++i) {
       auto &[from, revidx, revcap] = edges[to][i];
@@ -91,10 +93,45 @@ private:
           revcap += d;
           res += d;
           limit -= d;
+          // limitは1頂点から複数頂点へ流す場合があるので必要。(dfsで流しているので流せた場合にはパスが構築され残余グラフも更新されるため、複数頂点へ流してもOK)
           if (limit == 0) { break; }
         }
       }
     }
     return res;
   }
+
+  // 参考: FordFulkerson
+  // 貪欲法+逆辺による押し戻しにより最大流問題を解くアルゴリズム O(max_flow * E)
+  // std::vector<int> used;
+  // int check = 1;
+  // T dfs(int from, int t, T flow) {
+  //   if (from == t) { return flow; }
+  //   used[from] = check;
+  //   for (int i = 0; i < static_cast<int>(edges[from].size()); ++i) {
+  //     auto &[to, revidx, cap] = edges[from][i];
+  //     auto &[_from, _revidx, revcap] = edges[to][revidx];
+  //     if (cap > 0 && used[to] != check) {
+  //       T d = dfs(to, t, min(flow, cap));
+  //       if (d > 0) {
+  //         // 流せるなら流す
+  //         // 流した場合、辺の容量は減り、逆辺の容量は増える
+  //         cap -= d;
+  //         revcap += d;
+  //         return d;
+  //       }
+  //     }
+  //   }
+  //   return 0;
+  // }
+  // T max_flow(int s, int t) {
+  //   T flow = 0;
+  //   while (true) {
+  //     T f = dfs(s, t, std::numeric_limits<T>::max());
+  //     if (f == 0) break;
+  //     flow += f;
+  //     ++check;
+  //   }
+  //   return flow;
+  // }
 };
